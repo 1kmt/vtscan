@@ -41,6 +41,7 @@ python vtscan.py -i ./dirname/filename -k apikey -u -s detection, summary -z
 _________________________________________________________________
 Changelog
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2022-09-02 v2.1.2 fixed API key check process
 2022-08-24 v2.1.1 changed -s (screenshot) option (Individually selectable)
 2022-08-24 v2.1.0 added -j (json) option (Save response data in JSON format)
 2022-08-22 v2.0.0 changed from VirusTotal APIv2 to VirusTotal APIv3
@@ -365,7 +366,7 @@ def check_argument():
         sys.exit(-2)
 
     # Check API key format
-    if(not len(re.findall("[a-fA-F0-9]{64}", args.apikey)[0]) == 64):
+    if(len(args.apikey) < 64  or not len(re.findall("[a-fA-F0-9]{64}", args.apikey)[0]) == 64):
         logger.error("Invalid API key.")
         sys.exit(-2)
 
