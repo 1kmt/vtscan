@@ -114,7 +114,7 @@ See 'Command line examples'
 &nbsp;  
 ## Usage
 ```
-usage: vtscan.py [-h] [-b] -i INPUT [-j] [-k APIKEY] [-o OUTPUT]
+usage: vtscan.py [-h] [-b] -i INPUT [INPUT ...] [-j] [-k APIKEY] [-o OUTPUT]
                  [-s {detection,summary,details,relations,behavior,community} [{detection,summary,details,relations,behavior,community} ...]]
                  [-u] [-v] [-w {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17}]
                  [-z]
@@ -126,7 +126,7 @@ directory. It can also upload suspicious files.
 optional arguments:
   -h, --help            show this help message and exit
   -b, --batch           disable interactive mode
-  -i INPUT, --input INPUT
+  -i INPUT [INPUT ...], --input INPUT [INPUT ...]
                         suspicious file or directory containing suspicious
                         files
   -j, --json            save response data in JSON format
@@ -144,14 +144,14 @@ optional arguments:
   -z, --browser         open permalink in browser
 ```
 ### &#9635;&nbsp;&nbsp;Command line examples
-The -i option can be used to specify file or directory. It can also be used multiple times.  
+The -i option can be used to specify file or directory.  
 The -w option specifies the wait time for the next request.
 If the key is a public key, specify 15; if the key is a private key, specify 0 (zero).
 >The Public API is limited to 500 requests per day and a rate of 4 requests per minute.  
 >[Public vs Premium API](https://developers.virustotal.com/v2.0/reference/public-vs-private-api)
 ```
 python vtscan.py -i ./filename -k apiKey -w 0
-python vtscan.py -i ./filename -i ./dirname -k apiKey -w 15
+python vtscan.py -i ./filename ./dirname -k apiKey -w 15
 ```
 The API key and waiting time can also be embedded in the code.
 ```

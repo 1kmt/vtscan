@@ -5,8 +5,8 @@ Get a file report of suspicious files via VirusTotal API.
 It queries the hash value of the specified file and all files contained in the specified directory.
 It can also upload suspicious files.
 """
-__date__ = "2022/08/24"
-__version__ = "2.1.1"
+__date__ = "2022/09/03"
+__version__ = "2.1.3"
 __author__ = "ikmt"
 
 """
@@ -35,12 +35,13 @@ _________________________________________________________________
 Command line examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 python vtscan.py -i ./filename -k apikey
-python vtscan.py -i ./dirname1 -i ./dirname2/filename -k apikey -o ./dirname3
+python vtscan.py -i ./dirname1 ./dirname2/filename -k apikey -o ./dirname3
 python vtscan.py -i ./dirname -k apikey -u -w 0
 python vtscan.py -i ./dirname/filename -k apikey -u -s detection, summary -z
 _________________________________________________________________
 Changelog
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2022-09-03 v2.1.3 changed command line argument options(-i option, nargs)
 2022-09-02 v2.1.2 fixed API key check process
 2022-08-24 v2.1.1 changed -s (screenshot) option (Individually selectable)
 2022-08-24 v2.1.0 added -j (json) option (Save response data in JSON format)
@@ -164,6 +165,7 @@ Function
   - write_response_dict(response_dict, file_path):
   - take_screeshot(id:str, dir_path):
   - open_webpage(id:str):
+  x shutdown_logger_handler(logger):
 Class
   - VirusTotalAPIv3
   - WebScreenshot
@@ -299,7 +301,7 @@ def check_argument():
     )
     parser.add_argument("-i", "--input",
         type=str,
-        action="append",
+        nargs='+',
         required=True, 
         help="suspicious file or directory containing suspicious files"
     )
@@ -578,6 +580,34 @@ def open_webpage(id:str):
     logger.info(f"[{'PROC':<9}] OPEN WEB PAGE IN BROWSER")
     logger.info(f"[{'ACCESS PG':<9}] {url}")
     status = webbrowser.open(url, new=0, autoraise=True)
+
+
+def shutdown_logger_handler(logger):
+    """Manual shutdown of logs.
+
+    If the manual page is correct, then manual execution should not be necessary 
+    since the logging.shutdown() is registered in the atexit.
+    atexit is also executed when an exception occurs.
+
+    logging.shutdown()
+    Informs the logging system to perform an orderly shutdown 
+    by flushing and closing all handlers. ...
+    When the logging module is imported, 
+    it registers this function as an exit handler (see atexit),
+    so normally there’s no need to do that manually.
+    """
+    handlers = logger.handlers[:]
+    for handler in handlers:
+        try:
+            handler.acquire()
+            handler.flush()
+            handler.close()
+        except(OSError, ValueError):
+            pass
+        finally:
+            handler.release()
+
+        logger.removeHandler(handler)
 
 
 class VirusTotalAPIv3:
