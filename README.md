@@ -3,6 +3,8 @@ This tool collects file reports of suspicious files via VirusTotal APIv3.
 It queries the hash value of the specified file and all files contained in the specified directory.
 The VirusTotal API key is required to use this tool.
 If you don't have a VirusTotal API key, you can get one by creating a VirusTotal account.
+![scshot01](https://user-images.githubusercontent.com/112264303/188291484-6dbbe091-ba31-4676-bd8d-da2e10f72e62.PNG)
+![scshot02](https://user-images.githubusercontent.com/112264303/188294705-ffbfe45e-d323-43a0-984b-eb84ce23265b.PNG)
 &nbsp;  
 ## Features
 The main features are as follows:
@@ -68,7 +70,7 @@ You can save the following pages in PNG format.
   - hxxps://www[.]virustotal.com/gui/file/*sha256*/behavior
   - hxxps://www[.]virustotal.com/gui/file/*sha256*/community
 - Open permalink (VirusTotal detection page) in default browser. (-z option)
-- If "No matches found", You can upload suspicious files smaller than 500MB. (-u option)  
+- If "No matches found", You can upload suspicious files smaller than 650MB. (-u option)  
 If you need to upload files bigger than 32MB in size, **you need additional privileges.**  
 **Make sure the all files does not contain 'sensitive data'.**
 &nbsp;  
