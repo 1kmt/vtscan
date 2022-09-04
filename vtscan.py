@@ -5,8 +5,8 @@ Get a file report of suspicious files via VirusTotal API.
 It queries the hash value of the specified file and all files contained in the specified directory.
 It can also upload suspicious files.
 """
-__date__ = "2022/09/03"
-__version__ = "2.1.3"
+__date__ = "2022/09/04"
+__version__ = "2.1.4"
 __author__ = "ikmt"
 
 """
@@ -41,6 +41,7 @@ python vtscan.py -i ./dirname/filename -k apikey -u -s detection, summary -z
 _________________________________________________________________
 Changelog
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2022-09-04 v2.1.4 deleted permalink item from csv file
 2022-09-03 v2.1.3 changed command line argument options(-i option, nargs)
 2022-09-02 v2.1.2 fixed API key check process
 2022-08-24 v2.1.1 changed -s (screenshot) option (Individually selectable)
@@ -130,8 +131,7 @@ CSV_FIELD_NAMES = [
     "signature_signers",
     "signature_copyright",
     "votes_harmless",
-    "votes_malicious",
-    "permalink"
+    "votes_malicious"
 ]
 
 
@@ -199,7 +199,8 @@ def main():
     vt = VirusTotalAPIv3(api_key)
     vt.sleep_time = sleep_time
     vt.max_attempts = MAX_NUM_TRIALS
-    webshot = WebScreenshot()
+    if(args.screenshot is not None):
+        webshot = WebScreenshot()
     # Save processing results
     statistics = dict.fromkeys([
         "vt_total",
@@ -286,7 +287,8 @@ def main():
             + f",FAILURE:{statistics['sc_failure']:^5}")
 
     # Close Webdriver 
-    webshot.close()
+    if(args.screenshot is not None):
+        webshot.close()
     # End message
     logger.info(f"[{'END':<9}] {__file__}")
 
@@ -991,8 +993,7 @@ class VirusTotalAPIv3:
             "signature_signers",
             "signature_copyright",
             "votes_harmless",
-            "votes_malicious",
-            "permalink",
+            "votes_malicious"
         ], "")
 
         if(response_dict.temp_data.status_code == 200):
@@ -1025,12 +1026,12 @@ class VirusTotalAPIv3:
             if(response_dict.data.attributes.last_analysis_results is not None):
                 for engine_name, value_dict in response_dict.data.attributes.last_analysis_results.items():
                     if(value_dict.category == "malicious"):
-                        data["detected_malicious"] += f"[{value_dict.engine_name}<>{value_dict.result}]"
+                        data["detected_malicious"] += f"[{value_dict.engine_name}/{value_dict.result}]"
                     elif(value_dict.category == "suspicious"):
-                        data["detected_suspicious"] += f"[{value_dict.engine_name}<>{value_dict.result}]"
+                        data["detected_suspicious"] += f"[{value_dict.engine_name}/{value_dict.result}]"
             if(response_dict.data.attributes.sandbox_verdicts is not None):
                 for sandbox_name, value_dict in response_dict.data.attributes.sandbox_verdicts.items():
-                    data["sandbox"] += f"[{value_dict.sandbox_name} / {value_dict.category}]"
+                    data["sandbox"] += f"[{value_dict.sandbox_name}/{value_dict.category}]"
             if(response_dict.data.attributes.signature_info is not None):
                 data["signature_product"] = response_dict.data.attributes.signature_info.product
                 data["signature_verified"] = response_dict.data.attributes.signature_info.verified
@@ -1040,7 +1041,6 @@ class VirusTotalAPIv3:
             if(response_dict.data.attributes.total_votes is not None):
                 data["votes_harmless"] = response_dict.data.attributes.total_votes.harmless
                 data["votes_malicious"] = response_dict.data.attributes.total_votes.malicious
-            data["permalink"] = response_dict.data.links.self
         elif(response_dict.temp_data.status_code == 404):
             data["status_code"] = response_dict.temp_data.status_code
             data["status_message"] = "NoMatchesFound"

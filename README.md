@@ -52,8 +52,7 @@ CSV_FIELD_NAMES = [
 	"signature_signers",
 	"signature_copyright",
 	"votes_harmless",
-	"votes_malicious",
-	"permalink"
+	"votes_malicious"
 ]
 
 ```
@@ -177,4 +176,16 @@ You can select more than one from the options.
 ```
 python vtscan.py -i ./filename -k apiKey -w 0 -s detection details
 python vtscan.py -i ./filename -k apiKey -w 0 -s detection, details, relations, community
+```
+&nbsp;  
+## Appendix
+### &#9635;&nbsp;&nbsp;Run script with drag and drop
+- Windows  
+Create a batch file and drag and drop onto it.
+The following is a simple example of a batch file.
+```
+@echo off
+cd /d %~dp0
+python ./vtscan.py -i %* -k apiKey -w 0
+pause
 ```
