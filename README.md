@@ -3,8 +3,11 @@ This tool collects file reports of suspicious files via VirusTotal APIv3.
 It queries the hash value of the specified file and all files contained in the specified directory.
 The VirusTotal API key is required to use this tool.
 If you don't have a VirusTotal API key, you can get one by creating a VirusTotal account.
-![scshot01](https://user-images.githubusercontent.com/112264303/188291484-6dbbe091-ba31-4676-bd8d-da2e10f72e62.PNG)
-![scshot02](https://user-images.githubusercontent.com/112264303/188294705-ffbfe45e-d323-43a0-984b-eb84ce23265b.PNG)
+|![scshot_01_](https://user-images.githubusercontent.com/112264303/188310928-d63d9521-2d56-451b-b942-44239654d2f7.png)|
+|----|
+|![scshot_02_](https://user-images.githubusercontent.com/112264303/188310959-ba4a98e4-7260-4917-b939-89c898be4c11.png)|
+|![scshot_03_](https://user-images.githubusercontent.com/112264303/188310969-1cbb4552-9487-44ab-b45a-ed09cc1591a4.png)|
+
 &nbsp;  
 ## Features
 The main features are as follows:
