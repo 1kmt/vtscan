@@ -5,8 +5,8 @@ Get a file report of suspicious files via VirusTotal API.
 It queries the hash value of the specified file and all files contained in the specified directory.
 It can also upload suspicious files.
 """
-__date__ = "2022/09/04"
-__version__ = "2.1.4"
+__date__ = "2022/09/05"
+__version__ = "2.1.5"
 __author__ = "ikmt"
 
 """
@@ -41,6 +41,7 @@ python vtscan.py -i ./dirname/filename -k apikey -u -s detection, summary -z
 _________________________________________________________________
 Changelog
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2022-09-05 v2.1.5 added size limit process (650MB)
 2022-09-04 v2.1.4 deleted permalink item from csv file
 2022-09-03 v2.1.3 changed command line argument options(-i option, nargs)
 2022-09-02 v2.1.2 fixed API key check process
@@ -229,11 +230,11 @@ def main():
             if(response_dict.temp_data.status_code == 200):
                 vt.pause(sleep_time)
                 last_analysis_status = vt.check_analysis_status(response_dict.data.id)
+                vt.pause(sleep_time)
+                response_dict = vt.get_files(properties["md5"])
             else:
                 last_analysis_status = "failed"
 
-            vt.pause(sleep_time)
-            response_dict = vt.get_files(properties["md5"])
             response_dict.temp_data.update({
                 "last_analysis_status": last_analysis_status
             })
@@ -580,7 +581,7 @@ def open_webpage(id:str):
     base_url = "https://www.virustotal.com/gui/file/{id}/"
     url = base_url.format_map({"id": id})
     logger.info(f"[{'PROC':<9}] OPEN WEB PAGE IN BROWSER")
-    logger.info(f"[{'ACCESS PG':<9}] {url}")
+    logger.info(f"[{'ACCESS_PG':<9}] {url}")
     status = webbrowser.open(url, new=0, autoraise=True)
 
 
@@ -771,22 +772,38 @@ class VirusTotalAPIv3:
             with open(file_path, "rb") as rfp:
                 data = rfp.read()
             files = dict(file=(os.path.basename(file_path), data))
-            # The actual size limit is 500MBs
-            if(os.path.getsize(file_path) > 33554432):
-                response_dict = self.get_upload_url()
-                if(response_dict.temp_data.status_code == 200):
-                    self.pause(self._sleep_time)
-                    response_dict = self.post_files(response_dict.data, files=files)
-                else:
-                    pass
-            else:
-                response_dict = self.post_files(self.POST_FILES, files=files)
+            file_size = os.path.getsize(file_path)
         except FileNotFoundError:
             self._logger.error(f"FileNotFoundError:{file_path}")
             raise
         except OSError:
             self._logger.error(f"OSError:{file_path}")
             raise
+
+        # The actual size limit is 650MBs
+        if(file_size > 681574400):
+            json_text = r'''{
+                "error": {
+                    "message": "Your client issued a request that was too large",
+                    "code": "RequestEntityTooLarge"
+                },
+                "temp_data": {
+                    "status_code": 413,
+                    "status_message": "RequestEntityTooLarge",
+                    "url": null
+                }
+            }'''
+            response_dict = json.loads(json_text, object_hook=self.DotDict)
+            self._logger.warning(f"[{'SIZE_LMT':<9}] TooLarge,{file_size} byte")
+        elif(file_size > 33554432):
+            response_dict = self.get_upload_url()
+            if(response_dict.temp_data.status_code == 200):
+                self.pause(self._sleep_time)
+                response_dict = self.post_files(response_dict.data, files=files)
+            else:
+                pass
+        else:
+            response_dict = self.post_files(self.POST_FILES, files=files)
             
         return response_dict
 
@@ -805,7 +822,7 @@ class VirusTotalAPIv3:
 
             self._logger.log(
                 self.getSeverity(analysis_status),
-                f"[{'ANALSTA':<9}] {analysis_status}"
+                f"[{'ANLYS_STA':<9}] {analysis_status}"
             )
 
             if(analysis_status == "completed" or i >= self._max_attempts):
@@ -843,7 +860,7 @@ class VirusTotalAPIv3:
 
             self.pause(self._sleep_time)
 
-        return self.convert_response_to_dict(response)
+        return response_dict
 
     def repost(self, endpoint, files=None, json=None):
         for i in range(1, self._max_attempts + 1):
@@ -878,7 +895,7 @@ class VirusTotalAPIv3:
 
             self.pause(self._sleep_time)
 
-        return self.convert_response_to_dict(response)
+        return response_dict
 
     class DotDict(dict):
         """Accessing dict with dot notation
@@ -923,15 +940,31 @@ class VirusTotalAPIv3:
                 })
             })
         else:
-            json_text = json.dumps(response.json())
-            json_dict = json.loads(json_text, object_hook=self.DotDict)
-            json_dict.update({
-                "temp_data": self.DotDict({
-                    "status_code": response.status_code,
-                    "status_message": json_dict.error.code,
-                    "url": response.url
+            try:
+                json_text = json.dumps(response.json())
+                json_dict = json.loads(json_text, object_hook=self.DotDict)
+                json_dict.update({
+                    "temp_data": self.DotDict({
+                        "status_code": response.status_code,
+                        "status_message": json_dict.error.code,
+                        "url": response.url
+                    })
                 })
-            })
+            except:
+                # 413 Request Entity Too Large, etc
+                json_dict = {
+                    "error": {
+                        "message": response.text,
+                        "code": "RequestsJSONDecodeError"
+                    },
+                    "temp_data": {
+                        "status_code": response.status_code,
+                        "status_message": "RequestsJSONDecodeError",
+                        "url": response.url
+                    }
+                }
+                json_text = json.dumps(json_dict)
+                json_dict = json.loads(json_text, object_hook=self.DotDict)
         return json_dict
 
     @staticmethod
@@ -947,7 +980,8 @@ class VirusTotalAPIv3:
             is_continue = False
         elif(response_dict.temp_data.status_code == 400
             or response_dict.temp_data.status_code == 401
-            or response_dict.temp_data.status_code == 403):
+            or response_dict.temp_data.status_code == 403
+            or response_dict.temp_data.status_code == 413):
             # https://developers.virustotal.com/reference/errors"
             # 400 BadRequestError
             # 400 InvalidArgumentError
@@ -958,6 +992,7 @@ class VirusTotalAPIv3:
             # 401 UserNotActiveError
             # 401 WrongCredentialsError
             # 403 ForbiddenError
+            # 413 Request Entity Too Large
             is_continue = False
         else:
             is_continue = True
@@ -1044,9 +1079,11 @@ class VirusTotalAPIv3:
         elif(response_dict.temp_data.status_code == 404):
             data["status_code"] = response_dict.temp_data.status_code
             data["status_message"] = "NoMatchesFound"
+            data["last_analysis_status"] = response_dict.temp_data.last_analysis_status
         else:
             data["status_code"] = response_dict.temp_data.status_code
-            data["status_message"] = response_dict.error.code
+            data["status_message"] = response_dict.temp_data.status_message
+            data["last_analysis_status"] = response_dict.temp_data.last_analysis_status
 
         return data
 
@@ -1186,7 +1223,7 @@ class WebScreenshot:
             # Width is fixed at 1000px, height will be changed later.
             self.driver.set_window_size(page_width, page_height)
             # Load the web page
-            self._logger.info(f"[{'ACCESS PG':<9}] {url}")
+            self._logger.info(f"[{'ACCESS_PG':<9}] {url}")
             self.driver.get(url)
             # Check for changes in html element at 1 second intervals
             # If the web page has completed loading, the hash value is matched

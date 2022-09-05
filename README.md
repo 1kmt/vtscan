@@ -80,7 +80,8 @@ If you need to upload files bigger than 32MB in size, **you need additional priv
 ## Download and Installation
 ### 1.&nbsp;&nbsp;Check Python version ( version >= 3.6 required )
 Available since Python 3.6.
-To check the version, at the command prompt or terminal type:
+**Run Command Prompt or Terminal as administrator.**
+To check the version, enter the following command:
 ```
 python -V
 ```
