@@ -103,7 +103,7 @@ Click "**Download ZIP**" from the "**Code**" dropdown.
 &nbsp;  
 ### 3.&nbsp;&nbsp;Install the dependencies
 Need packages for working.
-If the package is not installed, install it using the following command.
+If the package is not installed, install it using the following command:
 ```
 python -m pip install requests
 python -m pip install selenium
